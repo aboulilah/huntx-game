@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>HUNT_X — Leaderboard</title>
+  <meta name="theme-color" content="#000000">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="shell" style="padding-bottom: 88px;">
+
+    <!-- Page header -->
+    <div class="header">
+      <div class="logo">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FFC2" stroke-width="2.5"><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        Leaderboard
+      </div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+    </div>
+
+    <!-- Hero brand block -->
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:12px 24px 20px;">
+      <h1 class="mono" style="font-size:26px;font-weight:800;letter-spacing:0.04em;color:#f4f4f5;margin-bottom:4px;">HUNTX</h1>
+      <p class="mono glow-text" style="font-size:10px;letter-spacing:0.3em;color:#00FFC2;">THE HUNT IS ON.</p>
+    </div>
+
+    <!-- Section title with corner-bracket flourish -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00FFC2" stroke-width="2.5"><path d="M9 3H4v5"/></svg>
+      <span class="mono" style="font-size:13px;letter-spacing:0.15em;color:#00FFC2;">GLOBAL_RANKINGS</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00FFC2" stroke-width="2.5"><path d="M15 21h5v-5"/></svg>
+    </div>
+    <div style="display:flex;justify-content:center;margin-bottom:20px;">
+      <div style="width:36px;height:2px;background:#00FFC2;box-shadow:0 0 8px rgba(0,255,194,0.7);border-radius:2px;"></div>
+    </div>
+
+    <div id="rankingList" style="padding:0 24px;display:flex;flex-direction:column;gap:8px;"></div>
+
+    <nav class="bottom-nav glass">
+      <a href="index.html" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="nav-label mono">Home</span>
+      </a>
+      <a href="profile.html" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="nav-label mono">Profile</span>
+      </a>
+      <a href="leaderboard.html" class="nav-item active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 4h3a2 2 0 0 1 2 2c0 2-2 4-4 4M7 4H4a2 2 0 0 0-2 2c0 2 2 4 4 4"/></svg>
+        <span class="nav-label mono">Leaderboard</span>
+      </a>
+    </nav>
+
+  </div>
+
+  <script src="assets/quests.js"></script>
+  <script>
+    // Fixed rival players (demo data) + the real user's live XP from localStorage.
+    const RIVALS = [
+      { name: 'Abdou', location: 'Portugal', xp: 45200 },
+      { name: 'Hakim', location: 'Morocco', xp: 14900 },
+    ];
+
+    const baseUserXP = 15420;
+    const userXP = baseUserXP + getTotalXP();
+
+    const players = [
+      ...RIVALS,
+      { name: 'YOU', location: 'Spain', xp: userXP, isUser: true },
+    ].sort((a, b) => b.xp - a.xp);
+
+    const listEl = document.getElementById('rankingList');
+    players.forEach((p, i) => {
+      const rank = String(i + 1).padStart(2, '0');
+      const row = document.createElement('div');
+      row.className = p.isUser ? 'glass glow-border' : '';
+      row.style.cssText = `
+        display:flex;align-items:center;justify-content:space-between;border-radius:12px;padding:12px 16px;
+        ${p.isUser
+          ? 'border-color:rgba(0,255,194,0.6);'
+          : 'background:rgba(24,24,27,0.6);border:1px solid #27272a;'}
+      `;
+      row.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="mono" style="font-size:12px;color:#71717a;width:20px;">${rank}</span>
+          <div style="display:flex;flex-direction:column;line-height:1.2;">
+            <span style="font-size:14px;font-weight:600;color:${p.isUser ? '#00FFC2' : '#e4e4e7'};">${p.name}</span>
+            <span class="mono" style="font-size:10px;letter-spacing:0.05em;color:#71717a;text-transform:uppercase;">${p.location}</span>
+          </div>
+        </div>
+        <span class="mono" style="font-size:14px;font-weight:700;color:${p.isUser ? '#00FFC2' : '#d4d4d8'};">${p.xp.toLocaleString()}<span style="font-size:10px;font-weight:600;opacity:0.7;"> XP</span></span>
+      `;
+      listEl.appendChild(row);
+    });
+  </script>
+</body>
+</html>

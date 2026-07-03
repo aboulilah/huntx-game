@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>HUNT_X — Hunt Complete</title>
+  <meta name="theme-color" content="#000000">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="shell" style="padding-bottom: 88px;">
+
+    <div class="header">
+      <div class="logo">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FFC2" stroke-width="2.5"><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        HUNTX
+      </div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+    </div>
+
+    <div style="text-align:center;margin-top:16px;margin-bottom:24px;">
+      <h1 class="glow-text" style="font-size:30px;font-weight:800;color:#00FFC2;line-height:1.15;">HUNT<br>COMPLETE</h1>
+    </div>
+
+    <div style="padding:0 24px;margin-bottom:32px;">
+      <div class="glass glow-border" style="border-radius:16px;padding:24px 0;display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <span class="mono" style="font-size:11px;letter-spacing:0.1em;color:#a1a1aa;">XP REWARD ACQUIRED</span>
+        <span id="xpValue" class="glow-text" style="font-size:36px;font-weight:800;color:#00FFC2;">+0 XP</span>
+      </div>
+    </div>
+
+    <div style="padding:0 24px;margin-bottom:32px;">
+      <p class="mono" style="font-size:11px;letter-spacing:0.1em;color:#71717a;text-align:center;margin-bottom:12px;">GLOBAL_RANKINGS</p>
+      <div id="rankingList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+    <div style="margin-top:auto;padding:0 24px;">
+      <a id="playAgainBtn" href="scan.html">
+        <button class="btn-primary glow-btn-shadow">PLAY AGAIN</button>
+      </a>
+    </div>
+
+    <nav class="bottom-nav glass">
+      <a href="index.html" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="nav-label mono">Home</span>
+      </a>
+      <a href="profile.html" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="nav-label mono">Profile</span>
+      </a>
+      <a href="leaderboard.html" class="nav-item active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 4h3a2 2 0 0 1 2 2c0 2-2 4-4 4M7 4H4a2 2 0 0 0-2 2c0 2 2 4 4 4"/></svg>
+        <span class="nav-label mono">Leaderboard</span>
+      </a>
+    </nav>
+
+  </div>
+
+  <script src="assets/quests.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const questId = urlParams.get('quest');
+    const quest = questId ? getQuestById(questId) : null;
+
+    document.getElementById('xpValue').textContent = `+${quest ? quest.xp : 0} XP`;
+
+    // Base leaderboard XP (15,420) plus whatever the user has actually earned locally.
+    const baseXP = 15420;
+    const earnedXP = getTotalXP();
+    const userXP = baseXP + earnedXP;
+
+    const RIVALS = [
+      { name: 'Abdou', location: 'Portugal', xp: 45200 },
+      { name: 'Hakim', location: 'Morocco', xp: 14900 },
+    ];
+    const players = [...RIVALS, { name: 'YOU', location: 'Spain', xp: userXP, isUser: true }]
+      .sort((a, b) => b.xp - a.xp);
+
+    const listEl = document.getElementById('rankingList');
+    players.forEach((p, i) => {
+      const rank = String(i + 1).padStart(2, '0');
+      const row = document.createElement('div');
+      row.className = p.isUser ? 'glass glow-border' : '';
+      row.style.cssText = `
+        display:flex;align-items:center;justify-content:space-between;border-radius:12px;padding:12px 16px;
+        ${p.isUser
+          ? 'border-color:rgba(0,255,194,0.6);'
+          : 'background:rgba(24,24,27,0.6);border:1px solid #27272a;'}
+      `;
+      row.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="mono" style="font-size:12px;color:#71717a;width:20px;">${rank}</span>
+          <div style="display:flex;flex-direction:column;line-height:1.2;">
+            <span style="font-size:14px;font-weight:600;color:${p.isUser ? '#00FFC2' : '#e4e4e7'};">${p.name}</span>
+            <span style="font-size:11px;color:#71717a;">${p.location}</span>
+          </div>
+        </div>
+        <span class="mono" style="font-size:14px;font-weight:600;color:${p.isUser ? '#00FFC2' : '#d4d4d8'};">${p.xp.toLocaleString()} XP</span>
+      `;
+      listEl.appendChild(row);
+    });
+
+    const next = getNextQuest();
+    document.getElementById('playAgainBtn').href = `scan.html?quest=${next.id}`;
+  </script>
+</body>
+</html>

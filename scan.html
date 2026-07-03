@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>HUNT_X — Scan</title>
+  <meta name="theme-color" content="#000000">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="shell">
+
+    <!-- Camera feed fills background -->
+    <video id="cameraFeed" autoplay playsinline muted
+      style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;"></video>
+    <canvas id="captureCanvas" style="display:none;"></canvas>
+
+    <!-- Fallback when camera unavailable/denied -->
+    <div id="cameraFallback" style="position:absolute;inset:0;background:#09090b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:0 32px;text-align:center;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#52525b" stroke-width="2"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      <p id="fallbackText" class="mono" style="font-size:13px;color:#71717a;">Requesting camera access...</p>
+    </div>
+
+    <!-- darken overlay -->
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.25);"></div>
+
+    <div style="position:relative;z-index:10;display:flex;flex-direction:column;min-height:100vh;padding-bottom:88px;">
+
+      <div class="header">
+        <div class="logo">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FFC2" stroke-width="2.5"><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          HUNTX
+        </div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+      </div>
+
+      <!-- Instruction pill -->
+      <div style="display:flex;justify-content:center;margin-top:16px;">
+        <div class="glass" style="display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00FFC2" stroke-width="2"><path d="M21 8V7l-3-4H6L3 7v1"/><path d="M3 8h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+          <span id="questLabel" class="mono" style="font-size:12px;letter-spacing:0.05em;color:#5CFFDD;">SCAN THE MUG</span>
+        </div>
+      </div>
+
+      <!-- Result banner (hidden by default) -->
+      <div id="resultBanner" style="display:none;justify-content:center;margin-top:12px;padding:0 24px;">
+        <div id="resultPill" class="glass" style="padding:10px 20px;border-radius:12px;text-align:center;width:100%;"></div>
+      </div>
+
+      <!-- AR reticle -->
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;">
+        <div style="position:relative;width:256px;height:256px;">
+          <div class="corner tl"></div>
+          <div class="corner tr"></div>
+          <div class="corner bl"></div>
+          <div class="corner br"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+            <div id="reticle" style="width:96px;height:96px;border-radius:999px;border:2px solid rgba(0,255,194,0.7);display:flex;align-items:center;justify-content:center;">
+              <div style="width:6px;height:6px;border-radius:999px;background:#00FFC2;box-shadow:0 0 15px rgba(0,255,194,0.5), 0 0 4px rgba(0,255,194,0.6);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:0 32px 16px;">
+        <button id="flashBtn" class="glass" style="width:48px;height:48px;border-radius:12px;border:none;display:flex;align-items:center;justify-content:center;color:#a1a1aa;cursor:pointer;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </button>
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <button id="scanBtn" style="width:64px;height:64px;border-radius:999px;background:#00FFC2;color:#000;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 20px rgba(0,255,194,0.55), 0 0 45px rgba(0,255,194,0.25);">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>
+          </button>
+          <span id="scanLabel" class="mono" style="font-size:10px;letter-spacing:0.1em;color:#00FFC2;">TAP TO SCAN</span>
+        </div>
+
+        <div style="width:48px;height:48px;"></div>
+      </div>
+
+    </div>
+
+    <nav class="bottom-nav glass" style="position:absolute;z-index:20;">
+      <a href="index.html" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="nav-label mono">Home</span>
+      </a>
+      <a href="profile.html" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="nav-label mono">Profile</span>
+      </a>
+      <a href="leaderboard.html" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 4h3a2 2 0 0 1 2 2c0 2-2 4-4 4M7 4H4a2 2 0 0 0-2 2c0 2 2 4 4 4"/></svg>
+        <span class="nav-label mono">Leaderboard</span>
+      </a>
+    </nav>
+
+  </div>
+
+  <script src="assets/quests.js"></script>
+  <script>
+    const video = document.getElementById('cameraFeed');
+    const canvas = document.getElementById('captureCanvas');
+    const fallback = document.getElementById('cameraFallback');
+    const fallbackText = document.getElementById('fallbackText');
+    const scanBtn = document.getElementById('scanBtn');
+    const scanLabel = document.getElementById('scanLabel');
+    const reticle = document.getElementById('reticle');
+    const flashBtn = document.getElementById('flashBtn');
+    const questLabel = document.getElementById('questLabel');
+    const resultBanner = document.getElementById('resultBanner');
+    const resultPill = document.getElementById('resultPill');
+
+    // Which quest are we scanning for? ?quest=mug in the URL, or the next
+    // incomplete quest from progress, falling back to the first quest.
+    const urlParams = new URLSearchParams(window.location.search);
+    const questId = urlParams.get('quest') || getNextQuest().id;
+    const quest = getQuestById(questId);
+    questLabel.textContent = `SCAN ${quest.label}`;
+
+    // attempt=1 is a real AI-checked scan. attempt=2+ means the player
+    // already failed once on this quest — the safety net auto-passes them.
+    const currentAttempt = parseInt(urlParams.get('attempt') || '1', 10);
+    let attemptCount = currentAttempt - 1;
+
+    let scanning = false;
+    let flashOn = false;
+
+    async function startCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        fallbackText.textContent = 'Camera not supported on this device';
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+          audio: false
+        });
+        video.srcObject = stream;
+        video.style.display = 'block';
+        fallback.style.display = 'none';
+      } catch (err) {
+        console.error('Camera access error:', err);
+        fallbackText.textContent = 'Camera Access Required';
+      }
+    }
+
+    startCamera();
+
+    flashBtn.addEventListener('click', () => {
+      flashOn = !flashOn;
+      flashBtn.style.color = flashOn ? '#00FFC2' : '#a1a1aa';
+    });
+
+    function capturePhoto() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/jpeg', 0.7);
+    }
+
+    function showResult(success, message) {
+      resultBanner.style.display = 'flex';
+      resultPill.textContent = message;
+      resultPill.style.color = success ? '#00FFC2' : '#f87171';
+      resultPill.style.borderColor = success ? 'rgba(0,255,194,0.6)' : 'rgba(248,113,113,0.5)';
+      resultPill.className = 'glass mono';
+    }
+
+    function passQuest(auto) {
+      markComplete(quest.id);
+      showResult(true, auto ? 'MOVING ON...' : 'MATCH CONFIRMED');
+      setTimeout(() => {
+        window.location.href = `reward.html?quest=${quest.id}`;
+      }, 900);
+    }
+
+    async function handleScan() {
+      if (scanning) return;
+      if (video.style.display === 'none') {
+        showResult(false, 'CAMERA NOT READY');
+        return;
+      }
+
+      // Safety net: if the AI rejected the first attempt, don't let the
+      // player get stuck — the second attempt passes automatically.
+      if (attemptCount >= 1) {
+        passQuest(true);
+        return;
+      }
+
+      scanning = true;
+      scanBtn.classList.add('scan-pulse');
+      reticle.classList.add('ping-slow');
+      scanLabel.textContent = 'ANALYZING...';
+      resultBanner.style.display = 'none';
+
+      try {
+        const image = capturePhoto();
+        const res = await fetch('/api/verify-scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image, target: quest.target })
+        });
+
+        const data = await res.json();
+        console.log('AI verification result:', data);
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Verification failed');
+        }
+
+        if (data.match) {
+          passQuest(false);
+        } else {
+          window.location.href = `scan-failed.html?quest=${quest.id}&attempt=${currentAttempt}`;
+        }
+      } catch (err) {
+        console.error('Scan error:', err);
+        window.location.href = `scan-failed.html?quest=${quest.id}&attempt=${currentAttempt}`;
+      }
+    }
+
+    function resetScanUI() {
+      scanning = false;
+      scanBtn.classList.remove('scan-pulse');
+      reticle.classList.remove('ping-slow');
+      scanLabel.textContent = 'TAP TO SCAN';
+    }
+
+    scanBtn.addEventListener('click', handleScan);
+  </script>
+</body>
+</html>
